@@ -1,2 +1,5 @@
-# pssg-cornet-dynamics-queue-proc
-Cornet-Dynamics Queue Process Service (pssg-cornet-dynamics-queue-proc)
+*** Hello World ***
+
+``` THIS IS THE QUEUE PROCESS SERVICE ```
+
+'that is all'
