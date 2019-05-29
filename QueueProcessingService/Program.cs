@@ -26,13 +26,13 @@ namespace QueueProcessingService
         string username = ConfigurationManager.FetchConfig("QUEUE_USERNAME");
         string password = ConfigurationManager.FetchConfig("QUEUE_PASSWORD");
         string queue_group = ConfigurationManager.FetchConfig("QUEUE_GROUP");
-        public static int reconnect_attempts = 5;
+        public static int reconnect_attempts = 0;
 
 
 
         public static void Main(string[] args)
         {
-            reconnect_attempts = Int32.TryParse(ConfigurationManager.FetchConfig("SERVER_RECONNECT_ATTEMPTS"), out int i) ? i : 5;
+            reconnect_attempts = Int32.TryParse(ConfigurationManager.FetchConfig("SERVER_RECONNECT_ATTEMPTS"), out int i) ? i : 0;
             AttemptLabel:
             try
             {
