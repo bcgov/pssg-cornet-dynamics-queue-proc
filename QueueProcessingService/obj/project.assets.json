@@ -11905,11 +11905,11 @@
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "C:\\Users\\179682\\Desktop\\GitLab\\cornet-queue-process\\QueueProcessingService\\QueueProcessingService.csproj",
+      "projectUniqueName": "C:\\Users\\179682\\Desktop\\GitHub (CorDyn)\\pssg-cornet-dynamics-queue-proc\\QueueProcessingService\\QueueProcessingService.csproj",
       "projectName": "QueueProcessingService",
-      "projectPath": "C:\\Users\\179682\\Desktop\\GitLab\\cornet-queue-process\\QueueProcessingService\\QueueProcessingService.csproj",
+      "projectPath": "C:\\Users\\179682\\Desktop\\GitHub (CorDyn)\\pssg-cornet-dynamics-queue-proc\\QueueProcessingService\\QueueProcessingService.csproj",
       "packagesPath": "C:\\Users\\179682\\.nuget\\packages\\",
-      "outputPath": "C:\\Users\\179682\\Desktop\\GitLab\\cornet-queue-process\\QueueProcessingService\\obj\\",
+      "outputPath": "C:\\Users\\179682\\Desktop\\GitHub (CorDyn)\\pssg-cornet-dynamics-queue-proc\\QueueProcessingService\\obj\\",
       "projectStyle": "PackageReference",
       "fallbackFolders": [
         "C:\\Program Files\\dotnet\\sdk\\NuGetFallbackFolder"

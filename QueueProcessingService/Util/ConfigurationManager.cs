@@ -20,13 +20,13 @@ namespace QueueProcessingService.Util
                 .Build();
 
             // Pulls in all CORDYN_ prefixed Environment Variables
-            EnvSetting = new ConfigurationBuilder().AddEnvironmentVariables("CORDYN.").Build();
+            EnvSetting = new ConfigurationBuilder().AddEnvironmentVariables("CORDYN_").Build();
         }
 
         public static String FetchConfig(String ConfigKey)
         {
             String returnValue = "";
-            String EnvKey = ConfigKey.Replace(":", ".");
+            String EnvKey = ConfigKey.Replace(":", "_");
             if (EnvSetting[EnvKey] != null)
             {
                 returnValue = EnvSetting[EnvKey];
