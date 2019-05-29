@@ -6,6 +6,7 @@ using NATS.Client;
 using Newtonsoft.Json;
 using System.Net.Http;
 using Newtonsoft.Json.Linq;
+using QueueProcessingService.Util;
 
 
 namespace QueueProcessingService
@@ -18,13 +19,36 @@ namespace QueueProcessingService
         bool shutdown = false;
 
         // Environment Variable Configuration
-        string url = (Environment.GetEnvironmentVariable("QUEUE_URL") != null) ? Environment.GetEnvironmentVariable("QUEUE_URL") : Defaults.Url;
-        string subject = (Environment.GetEnvironmentVariable("QUEUE_SUBJECT") != null) ? Environment.GetEnvironmentVariable("QUEUE_SUBJECT") : "Cornet.Dynamics";
-        bool sync = (Environment.GetEnvironmentVariable("SYNCHRONOUS") != null) ? (Environment.GetEnvironmentVariable("SYNCHRONOUS") == "true") : false;
-        bool verbose = (Environment.GetEnvironmentVariable("VERBOSE") != null) ? (Environment.GetEnvironmentVariable("VERBOSE") == "true") : true;
-        string username = (Environment.GetEnvironmentVariable("QUEUE_USERNAME") != null) ? Environment.GetEnvironmentVariable("QUEUE_USERNAME") : "";
-        string password = (Environment.GetEnvironmentVariable("QUEUE_PASSWORD") != null) ? Environment.GetEnvironmentVariable("QUEUE_PASSWORD") : "";
-        string queue_group = (Environment.GetEnvironmentVariable("QUEUE_GROUP") != null) ? Environment.GetEnvironmentVariable("QUEUE_GROUP") : "worker";
+        string url = ConfigurationManager.FetchConfig("QUEUE_URL");
+        string subject = ConfigurationManager.FetchConfig("QUEUE_SUBJECT");
+        bool sync = (ConfigurationManager.FetchConfig("SYNCHRONOUS") == "TRUE");
+        bool verbose = (ConfigurationManager.FetchConfig("VERBOSE") == "TRUE");
+        string username = ConfigurationManager.FetchConfig("QUEUE_USERNAME");
+        string password = ConfigurationManager.FetchConfig("QUEUE_PASSWORD");
+        string queue_group = ConfigurationManager.FetchConfig("QUEUE_GROUP");
+        public static int reconnect_attempts = Int32.TryParse(ConfigurationManager.FetchConfig("SERVER_RECONNECT_ATTEMPTS"), out int i) ? i : 0;
+
+
+
+        public static void Main(string[] args)
+        {
+            AttemptLabel:
+            try
+            {
+                new QueueProcess().Run(args);
+            }
+            catch (Exception ex)
+            {
+                System.Console.Error.WriteLine("Exception: " + ex.Message);
+                System.Console.Error.WriteLine(ex);
+                
+                if (reconnect_attempts > 0)
+                {
+                    reconnect_attempts--;
+                    goto AttemptLabel;
+                }
+            }
+        }
 
         public void Run(string[] args)
         {
@@ -263,18 +287,6 @@ namespace QueueProcessingService
                 sync ? "Synchronously" : "Asynchronously");
         }
 
-        public static void Main(string[] args)
-        {
-            try
-            {
-                new QueueProcess().Run(args);
-            }
-            catch (Exception ex)
-            {
-                System.Console.Error.WriteLine("Exception: " + ex.Message);
-                System.Console.Error.WriteLine(ex);
-            }
-        }
     
 }
 
