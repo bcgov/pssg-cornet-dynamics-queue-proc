@@ -5,6 +5,7 @@ using System.Text;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using QueueProcessingService.Util;
+using System.Threading.Tasks;
 
 namespace QueueProcessingService
 {
@@ -46,6 +47,15 @@ namespace QueueProcessingService
             }
         }
 
+        
+
+        public static async Task<HttpResponseMessage> GetAsync(string uri)
+        {
+            var httpClient = new HttpClient();
+            HttpResponseMessage content = await httpClient.GetAsync(uri);
+            return await Task.Run(() => content);
+        }
+
         public static HttpResponseMessage GetData(String endpoint)
         {
             Console.WriteLine("Right before the httpClient Init");
@@ -55,8 +65,9 @@ namespace QueueProcessingService
                 {
                     httpClient.Timeout = new TimeSpan(0, timeout, 0);
                     //httpClient.DefaultRequestHeaders.Add("Accept", "application/json");
-                   // Console.WriteLine("Performing a GET of " + endpoint);
+                    // Console.WriteLine("Performing a GET of " + endpoint);
                     HttpResponseMessage httpResponseMessage = httpClient.GetAsync(endpoint).Result;
+             
                   //  Console.WriteLine("FINISHED!");
                     return httpResponseMessage;
                 }

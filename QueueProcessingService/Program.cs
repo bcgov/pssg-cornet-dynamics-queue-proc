@@ -148,7 +148,8 @@ namespace QueueProcessingService
                     break;
                 case "GET":
                     Console.WriteLine("Inside the GET Case");
-                    data = DataClient.GetData(MsgUrl);
+                    var Task = DataClient.GetAsync(MsgUrl);
+                    data = Task.Result;
                     break;
                 case "PUT":
                     data = DataClient.PutData(MsgUrl, payload);
