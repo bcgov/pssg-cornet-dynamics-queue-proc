@@ -23,7 +23,24 @@ namespace QueueProcessingService
             }
         }
 
-       
+
+        public static async Task<HttpResponseMessage> PostAsync(string uri, JRaw data)
+        {
+            try
+            {
+                HttpClient httpClient = new HttpClient();               
+                HttpResponseMessage content = await httpClient.PostAsJsonAsync(uri,data);
+                return await Task.Run(() => content);
+            }
+            catch (Exception Ex)
+            {
+                Console.WriteLine(Ex.Message);
+                Console.WriteLine(Ex.InnerException.Message);
+                Console.WriteLine(Ex.InnerException.InnerException.Message);
+                return null;
+            }
+        }
+
 
         public static HttpResponseMessage PutData(String endpoint, JRaw data)
         {
@@ -53,7 +70,7 @@ namespace QueueProcessingService
         {
             try
             {
-                var httpClient = new HttpClient();
+                HttpClient httpClient = new HttpClient();
                 HttpResponseMessage content = await httpClient.GetAsync(uri);
                 return await Task.Run(() => content);
             }

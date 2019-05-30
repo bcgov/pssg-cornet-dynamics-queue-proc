@@ -141,10 +141,12 @@ namespace QueueProcessingService
             JRaw payload = natMessageObj.payload;
 
             Console.WriteLine(MsgVerb + " FOR: " + MsgUrl);
+           
             switch (MsgVerb)
             {
                 case "POST":
-                    data = DataClient.PostData(MsgUrl, payload);
+                    var postTask = DataClient.PostAsync(MsgUrl, payload);
+                    data = postTask.Result;
                     break;
                 case "GET":
                     Console.WriteLine("Inside the GET Case");
