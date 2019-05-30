@@ -145,13 +145,11 @@ namespace QueueProcessingService
             switch (MsgVerb)
             {
                 case "POST":
-                    var postTask = DataClient.PostAsync(MsgUrl, payload);
-                    data = postTask.Result;
+                    data = DataClient.PostAsync(MsgUrl, payload).Result;                   
                     break;
                 case "GET":
                     Console.WriteLine("Inside the GET Case");
-                    var Task = DataClient.GetAsync(MsgUrl);
-                    data = Task.Result;
+                    data = DataClient.GetAsync(MsgUrl).Result;                 
                     break;
                 case "PUT":
                     data = DataClient.PutData(MsgUrl, payload);
@@ -173,7 +171,7 @@ namespace QueueProcessingService
                 Console.WriteLine("Response Data: " + MsgResponse);
                 Console.WriteLine("Sending Response to: " + MsgResponseUrl);
 
-                HttpResponseMessage responseData = DataClient.PostData(MsgResponseUrl, MsgResponse);
+                HttpResponseMessage responseData = DataClient.PostAsync(MsgResponseUrl, MsgResponse).Result;
                 // @TODO - Log success or failure here
                 if (responseData.IsSuccessStatusCode)
                 {
