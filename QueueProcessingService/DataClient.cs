@@ -64,6 +64,7 @@ namespace QueueProcessingService
             catch (Exception Ex)
             {
                 Console.WriteLine(Ex.Message);
+                Console.WriteLine(Ex.InnerException.Message);
                 return null;
             }
         }
