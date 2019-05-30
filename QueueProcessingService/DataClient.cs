@@ -48,14 +48,23 @@ namespace QueueProcessingService
 
         public static HttpResponseMessage GetData(String endpoint)
         {
-            using (HttpClient httpClient = new HttpClient())
+            Console.WriteLine("Right before the httpClient Init");
+            try
             {
-                httpClient.Timeout = new TimeSpan(0, timeout, 0);
-                httpClient.DefaultRequestHeaders.Add("Accept", "application/json");
-                Console.WriteLine("Performing a GET of " + endpoint);
-                HttpResponseMessage httpResponseMessage = httpClient.GetAsync(endpoint).Result;
-                Console.WriteLine("FINISHED!");
-                return httpResponseMessage;
+                using (HttpClient httpClient = new HttpClient())
+                {
+                    httpClient.Timeout = new TimeSpan(0, timeout, 0);
+                    httpClient.DefaultRequestHeaders.Add("Accept", "application/json");
+                    Console.WriteLine("Performing a GET of " + endpoint);
+                    HttpResponseMessage httpResponseMessage = httpClient.GetAsync(endpoint).Result;
+                    Console.WriteLine("FINISHED!");
+                    return httpResponseMessage;
+                }
+            }
+            catch (Exception Ex)
+            {
+                Console.WriteLine(Ex.Message);
+                return null;
             }
         }
     }
