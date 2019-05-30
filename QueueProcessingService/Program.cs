@@ -177,12 +177,10 @@ namespace QueueProcessingService
                 }
                 else
                 {
+                    Console.WriteLine("Failure Code: " + data.StatusCode);
+
                     // @TODO - Failure Retries
-                }
-
-
-                
-              
+                }              
 
             }
             else
@@ -191,10 +189,6 @@ namespace QueueProcessingService
                 // @TODO Error Escalation Strategy/Queue
 
             }
-
-            
-
-
             
             
 
