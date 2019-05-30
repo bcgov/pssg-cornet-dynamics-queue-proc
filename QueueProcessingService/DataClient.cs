@@ -55,9 +55,9 @@ namespace QueueProcessingService
                 {
                     httpClient.Timeout = new TimeSpan(0, timeout, 0);
                     //httpClient.DefaultRequestHeaders.Add("Accept", "application/json");
-                    Console.WriteLine("Performing a GET of " + endpoint);
+                   // Console.WriteLine("Performing a GET of " + endpoint);
                     HttpResponseMessage httpResponseMessage = httpClient.GetAsync(endpoint).Result;
-                    Console.WriteLine("FINISHED!");
+                  //  Console.WriteLine("FINISHED!");
                     return httpResponseMessage;
                 }
             }
