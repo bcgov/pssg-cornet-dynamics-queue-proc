@@ -40,7 +40,7 @@ namespace QueueProcessingService
             using (HttpClient httpClient = new HttpClient())
             {
                 httpClient.Timeout = new TimeSpan(0, timeout, 0);
-                httpClient.DefaultRequestHeaders.Add("Accept", "application/json");
+                //httpClient.DefaultRequestHeaders.Add("Accept", "application/json");
                 HttpResponseMessage httpResponseMessage = httpClient.DeleteAsync(endpoint).Result;
                 return httpResponseMessage;
             }
@@ -54,7 +54,7 @@ namespace QueueProcessingService
                 using (HttpClient httpClient = new HttpClient())
                 {
                     httpClient.Timeout = new TimeSpan(0, timeout, 0);
-                    httpClient.DefaultRequestHeaders.Add("Accept", "application/json");
+                    //httpClient.DefaultRequestHeaders.Add("Accept", "application/json");
                     Console.WriteLine("Performing a GET of " + endpoint);
                     HttpResponseMessage httpResponseMessage = httpClient.GetAsync(endpoint).Result;
                     Console.WriteLine("FINISHED!");
@@ -65,6 +65,7 @@ namespace QueueProcessingService
             {
                 Console.WriteLine(Ex.Message);
                 Console.WriteLine(Ex.InnerException.Message);
+                Console.WriteLine(Ex.InnerException.InnerException.Message);
                 return null;
             }
         }
