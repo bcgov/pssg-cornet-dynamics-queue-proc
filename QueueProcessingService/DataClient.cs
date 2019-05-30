@@ -51,9 +51,19 @@ namespace QueueProcessingService
 
         public static async Task<HttpResponseMessage> GetAsync(string uri)
         {
-            var httpClient = new HttpClient();
-            HttpResponseMessage content = await httpClient.GetAsync(uri);
-            return await Task.Run(() => content);
+            try
+            {
+                var httpClient = new HttpClient();
+                HttpResponseMessage content = await httpClient.GetAsync(uri);
+                return await Task.Run(() => content);
+            }
+            catch (Exception Ex)
+            {
+                Console.WriteLine(Ex.Message);
+                Console.WriteLine(Ex.InnerException.Message);
+                Console.WriteLine(Ex.InnerException.InnerException.Message);
+                return null;
+            }
         }
 
         public static HttpResponseMessage GetData(String endpoint)
