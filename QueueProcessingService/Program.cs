@@ -16,7 +16,7 @@ namespace QueueProcessingService
         Dictionary<string, string> parsedArgs = new Dictionary<string, string>();
         int count = 0;
         int received = 0;
-        bool shutdown = false;
+        // bool shutdown = false;
 
         // Environment Variable Configuration
         string url = ConfigurationManager.FetchConfig("QUEUE_URL");
@@ -129,7 +129,9 @@ namespace QueueProcessingService
 
         private void processMessage(Msg m)
         {
+            Console.WriteLine("\n\n\n\n\n\n"); // Flush the Log a bit
             Console.WriteLine("Received: " + System.Text.Encoding.UTF8.GetString(m.Data, 0, m.Data.Length));
+            Console.WriteLine("\n"); // Flush the Log a bit
             HttpResponseMessage data;
 
             NatMessageObj natMessageObj = JsonConvert.DeserializeObject<NatMessageObj>(System.Text.Encoding.UTF8.GetString(m.Data, 0, m.Data.Length));
@@ -147,8 +149,7 @@ namespace QueueProcessingService
                 case "POST":
                     data = DataClient.PostAsync(MsgUrl, payload).Result;                   
                     break;
-                case "GET":
-                    Console.WriteLine("Inside the GET Case");
+                case "GET":                    
                     data = DataClient.GetAsync(MsgUrl).Result;                 
                     break;
                 case "PUT":
@@ -169,7 +170,7 @@ namespace QueueProcessingService
                 JRaw MsgResponse = new JRaw(JsonConvert.DeserializeObject(data.Content.ReadAsStringAsync().Result));
                 
                 Console.WriteLine("Response Data: " + MsgResponse);
-                Console.WriteLine("Sending Response to: " + MsgResponseUrl);
+                Console.WriteLine("Sending Response data to: " + MsgResponseUrl);
 
                 HttpResponseMessage responseData = DataClient.PostAsync(MsgResponseUrl, MsgResponse).Result;
                 // @TODO - Log success or failure here
@@ -282,12 +283,8 @@ namespace QueueProcessingService
             System.Console.WriteLine("  Subject: {0}", subject);
             System.Console.WriteLine("  Receiving: {0}",
                 sync ? "Synchronously" : "Asynchronously");
-        }
-
-    
-}
-
-
+        }    
+    }
 
 }
 
