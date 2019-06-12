@@ -153,10 +153,10 @@ namespace QueueProcessingService
                     data = DataClient.GetAsync(MsgUrl).Result;                 
                     break;
                 case "PUT":
-                    data = DataClient.PutData(MsgUrl, payload);
+                    data = DataClient.PutAsync(MsgUrl, payload).Result;
                     break;
                 case "DELETE":
-                    data = DataClient.DeleteData(MsgUrl, payload);
+                    data = DataClient.DeleteAsync(MsgUrl, payload).Result;
                     break;
                 default:
                     throw new Exception("Invalid VERB, message not processed");                    
@@ -164,26 +164,36 @@ namespace QueueProcessingService
 
             if (data.IsSuccessStatusCode)
             {
+                               
                 Console.WriteLine("Success Code: " + data.StatusCode);
                 // @TODO Dequeue process here
 
                 JRaw MsgResponse = new JRaw(JsonConvert.DeserializeObject(data.Content.ReadAsStringAsync().Result));
-                
-                Console.WriteLine("Response Data: " + MsgResponse);
-                Console.WriteLine("Sending Response data to: " + MsgResponseUrl);
 
-                HttpResponseMessage responseData = DataClient.PostAsync(MsgResponseUrl, MsgResponse).Result;
-                // @TODO - Log success or failure here
-                if (responseData.IsSuccessStatusCode)
-                {
-                    Console.WriteLine("Final Response: " + new JRaw(JsonConvert.DeserializeObject(responseData.Content.ReadAsStringAsync().Result)));
+                // Only return the results if response URL was set, some requests require no response
+                if (!string.IsNullOrEmpty(MsgResponseUrl)) { 
+                    Console.WriteLine("Response Data: " + MsgResponse);
+                    Console.WriteLine("Sending Response data to: " + MsgResponseUrl);
+
+                    HttpResponseMessage responseData = DataClient.PostAsync(MsgResponseUrl, MsgResponse).Result;
+                    // @TODO - Log success or failure here
+                    if (responseData.IsSuccessStatusCode)
+                    {
+                        Console.WriteLine("Final Response: " + new JRaw(JsonConvert.DeserializeObject(responseData.Content.ReadAsStringAsync().Result)));
+                    }
+                    else
+                    {
+                        Console.WriteLine("Failure Code: " + data.StatusCode);
+
+                        // @TODO - Failure Retries
+                    }
                 }
                 else
                 {
-                    Console.WriteLine("Failure Code: " + data.StatusCode);
-
-                    // @TODO - Failure Retries
-                }              
+                    Console.WriteLine("Response Data: " + MsgResponse);
+                    Console.WriteLine("No Response URL Set, work is complete ");
+                }
+            
 
             }
             else

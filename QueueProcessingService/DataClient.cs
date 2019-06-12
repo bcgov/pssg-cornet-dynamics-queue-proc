@@ -12,23 +12,14 @@ namespace QueueProcessingService
     static class DataClient
     {
         private static int timeout = int.Parse(ConfigurationManager.FetchConfig("Request_Timeout").ToString());
-        public static HttpResponseMessage PostData(String endpoint, JRaw data)
-        {
-            using (HttpClient httpClient = new HttpClient())
-            {
-                httpClient.Timeout = new TimeSpan(0, timeout, 0);
-                String jsonRequest = JsonConvert.SerializeObject(data);
-                HttpResponseMessage httpResponseMessage = httpClient.PostAsJsonAsync(endpoint, data).Result;
-                return httpResponseMessage;
-            }
-        }
-
+   
 
         public static async Task<HttpResponseMessage> PostAsync(string uri, JRaw data)
         {
             try
             {
-                HttpClient httpClient = new HttpClient();               
+                HttpClient httpClient = new HttpClient();
+                httpClient.Timeout = new TimeSpan(0, timeout, 0);
                 HttpResponseMessage content = await httpClient.PostAsJsonAsync(uri,data);
                 return await Task.Run(() => content);
             }
@@ -42,36 +33,34 @@ namespace QueueProcessingService
         }
 
 
-        public static HttpResponseMessage PutData(String endpoint, JRaw data)
-        {
-            using (HttpClient httpClient = new HttpClient())
-            {
-                httpClient.Timeout = new TimeSpan(0, timeout, 0);
-                String jsonRequest = JsonConvert.SerializeObject(data);
-                HttpResponseMessage httpResponseMessage = httpClient.PutAsJsonAsync(endpoint, data).Result;
-                return httpResponseMessage;
-            }
-        }
-
-        public static HttpResponseMessage DeleteData(String endpoint, JRaw data)
-        {
-            using (HttpClient httpClient = new HttpClient())
-            {
-                httpClient.Timeout = new TimeSpan(0, timeout, 0);
-                //httpClient.DefaultRequestHeaders.Add("Accept", "application/json");
-                HttpResponseMessage httpResponseMessage = httpClient.DeleteAsync(endpoint).Result;
-                return httpResponseMessage;
-            }
-        }
-
-        
-
-        public static async Task<HttpResponseMessage> GetAsync(string uri)
+        public static async Task<HttpResponseMessage> PutAsync(String endpoint, JRaw data)
         {
             try
             {
                 HttpClient httpClient = new HttpClient();
-                HttpResponseMessage content = await httpClient.GetAsync(uri);
+                httpClient.Timeout = new TimeSpan(0, timeout, 0);
+                String jsonRequest = JsonConvert.SerializeObject(data);
+                HttpResponseMessage content = httpClient.PutAsJsonAsync(endpoint, data).Result;
+                return await Task.Run(() => content);
+            }
+            catch (Exception Ex)
+            {
+                Console.WriteLine(Ex.Message);
+                Console.WriteLine(Ex.InnerException.Message);
+                Console.WriteLine(Ex.InnerException.InnerException.Message);
+                return null;
+            }
+
+        }
+
+        public static async Task<HttpResponseMessage> DeleteAsync(String endpoint, JRaw data)
+        {
+            try
+            {
+                HttpClient httpClient = new HttpClient();
+                httpClient.Timeout = new TimeSpan(0, timeout, 0);
+                //httpClient.DefaultRequestHeaders.Add("Accept", "application/json");
+                HttpResponseMessage content = httpClient.DeleteAsync(endpoint).Result;
                 return await Task.Run(() => content);
             }
             catch (Exception Ex)
@@ -83,21 +72,16 @@ namespace QueueProcessingService
             }
         }
 
-        public static HttpResponseMessage GetData(String endpoint)
+        
+
+        public static async Task<HttpResponseMessage> GetAsync(string uri)
         {
-            Console.WriteLine("Right before the httpClient Init");
             try
             {
-                using (HttpClient httpClient = new HttpClient())
-                {
-                    httpClient.Timeout = new TimeSpan(0, timeout, 0);
-                    //httpClient.DefaultRequestHeaders.Add("Accept", "application/json");
-                    // Console.WriteLine("Performing a GET of " + endpoint);
-                    HttpResponseMessage httpResponseMessage = httpClient.GetAsync(endpoint).Result;
-             
-                  //  Console.WriteLine("FINISHED!");
-                    return httpResponseMessage;
-                }
+                HttpClient httpClient = new HttpClient();
+                httpClient.Timeout = new TimeSpan(0, timeout, 0);
+                HttpResponseMessage content = await httpClient.GetAsync(uri);
+                return await Task.Run(() => content);
             }
             catch (Exception Ex)
             {
