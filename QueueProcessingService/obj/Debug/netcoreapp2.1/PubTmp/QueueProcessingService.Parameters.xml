@@ -1,6 +1,0 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
-<parameters>
-  <parameter name="IIS Web Application Name" description="" value="QueueProcess/QueueProcessService" tags="IisApp">
-    <parameterEntry kind="ProviderPath" scope="IisApp" match="^C:\\Users\\179682\\Desktop\\GitLab\\cornet-queue-process\\QueueProcessingService\\obj\\Debug\\netcoreapp2\.1\\PubTmp\\Out\\$" />
-  </parameter>
-</parameters>
