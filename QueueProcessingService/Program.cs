@@ -30,6 +30,8 @@ namespace QueueProcessingService
         string password = ConfigurationManager.FetchConfig("QUEUE_PASSWORD");
         string queue_group = ConfigurationManager.FetchConfig("QUEUE_GROUP");
         string durableName = ConfigurationManager.FetchConfig("DURABLE_NAME");
+        string clusterName = ConfigurationManager.FetchConfig("CLUSTER_NAME");
+        string clientID = ConfigurationManager.FetchConfig("CLIENT_ID");
         int maxErrorRetry = int.Parse(ConfigurationManager.FetchConfig("MAX_RETRY").ToString());
         public static int reconnect_attempts = 0;
 
@@ -63,7 +65,7 @@ namespace QueueProcessingService
             StanConnectionFactory stanConnectionFactory = new StanConnectionFactory();
             StanOptions stanOptions = StanOptions.GetDefaultOptions();
             stanOptions.NatsURL = String.Format("nats://{0}", url);
-            using (var c = stanConnectionFactory.CreateConnection("local", "id", stanOptions))
+            using (var c = stanConnectionFactory.CreateConnection(clusterName, clientID, stanOptions))
             {
                 TimeSpan elapsed;
 
