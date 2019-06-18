@@ -26,9 +26,8 @@ namespace QueueProcessingService
             catch (Exception Ex)
             {
                 Console.WriteLine(Ex.Message);
-                Console.WriteLine(Ex.InnerException.Message);
-                Console.WriteLine(Ex.InnerException.InnerException.Message);
-                return null;
+                HttpResponseMessage failureResponse = new HttpResponseMessage(System.Net.HttpStatusCode.BadRequest);
+                return failureResponse;
             }
         }
 
@@ -46,9 +45,8 @@ namespace QueueProcessingService
             catch (Exception Ex)
             {
                 Console.WriteLine(Ex.Message);
-                Console.WriteLine(Ex.InnerException.Message);
-                Console.WriteLine(Ex.InnerException.InnerException.Message);
-                return null;
+                HttpResponseMessage failureResponse = new HttpResponseMessage(System.Net.HttpStatusCode.BadRequest);
+                return failureResponse;
             }
 
         }
@@ -66,9 +64,8 @@ namespace QueueProcessingService
             catch (Exception Ex)
             {
                 Console.WriteLine(Ex.Message);
-                Console.WriteLine(Ex.InnerException.Message);
-                Console.WriteLine(Ex.InnerException.InnerException.Message);
-                return null;
+                HttpResponseMessage failureResponse = new HttpResponseMessage(System.Net.HttpStatusCode.BadRequest);
+                return failureResponse;
             }
         }
 
@@ -86,9 +83,8 @@ namespace QueueProcessingService
             catch (Exception Ex)
             {
                 Console.WriteLine(Ex.Message);
-                Console.WriteLine(Ex.InnerException.Message);
-                Console.WriteLine(Ex.InnerException.InnerException.Message);
-                return null;
+                HttpResponseMessage failureResponse = new HttpResponseMessage(System.Net.HttpStatusCode.BadRequest);
+                return failureResponse;
             }
         }
     }

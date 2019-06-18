@@ -4,7 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 
-namespace QueueProcessingService
+namespace Objects
 {
     public class NatMessageObj
     {
@@ -16,6 +16,8 @@ namespace QueueProcessingService
         public String eventId { get; set; }
         [JsonProperty("error_queue")]
         public String errorQueue { get; set; }
+        [JsonProperty("error_count")]
+        public int errorCount { get; set; }
         [JsonProperty("verb")]
         public String verb { get; set; }
         [JsonProperty("payload")]

@@ -7,7 +7,10 @@ using Newtonsoft.Json;
 using System.Net.Http;
 using Newtonsoft.Json.Linq;
 using QueueProcessingService.Util;
-
+using STAN.Client;
+using Objects;
+using QueueProcessingService.Client;
+using System.Net;
 
 namespace QueueProcessingService
 {
@@ -26,6 +29,8 @@ namespace QueueProcessingService
         string username = ConfigurationManager.FetchConfig("QUEUE_USERNAME");
         string password = ConfigurationManager.FetchConfig("QUEUE_PASSWORD");
         string queue_group = ConfigurationManager.FetchConfig("QUEUE_GROUP");
+        string durableName = ConfigurationManager.FetchConfig("DURABLE_NAME");
+        int maxErrorRetry = int.Parse(ConfigurationManager.FetchConfig("MAX_RETRY").ToString());
         public static int reconnect_attempts = 0;
 
 
@@ -33,7 +38,7 @@ namespace QueueProcessingService
         public static void Main(string[] args)
         {
             reconnect_attempts = Int32.TryParse(ConfigurationManager.FetchConfig("SERVER_RECONNECT_ATTEMPTS"), out int i) ? i : 0;
-            AttemptLabel:
+        AttemptLabel:
             try
             {
                 new QueueProcess().Run(args);
@@ -42,7 +47,7 @@ namespace QueueProcessingService
             {
                 System.Console.Error.WriteLine("Exception: " + ex.Message);
                 System.Console.Error.WriteLine(ex);
-                
+
                 if (reconnect_attempts > 0)
                 {
                     reconnect_attempts--;
@@ -55,17 +60,16 @@ namespace QueueProcessingService
         {
             parseArgs(args);
             banner();
-
-            Options opts = ConnectionFactory.GetDefaultOptions();
-            opts.Url = url;
-
-            using (IConnection c = new ConnectionFactory().CreateConnection(opts))
+            StanConnectionFactory stanConnectionFactory = new StanConnectionFactory();
+            StanOptions stanOptions = StanOptions.GetDefaultOptions();
+            stanOptions.NatsURL = String.Format("nats://{0}", url);
+            using (var c = stanConnectionFactory.CreateConnection("local", "id", stanOptions))
             {
                 TimeSpan elapsed;
 
                 if (sync)
                 {
-                    elapsed = receiveSyncSubscriber(c);
+                    elapsed = syncSubscriber(c);
                 }
                 else
                 {
@@ -75,10 +79,35 @@ namespace QueueProcessingService
                 System.Console.Write("Received {0} msgs in {1} seconds ", received, elapsed.TotalSeconds);
                 System.Console.WriteLine("({0} msgs/second).",
                     (int)(received / elapsed.TotalSeconds));
-                printStats(c);
+                //printStats(c);
 
             }
         }
+
+        private TimeSpan syncSubscriber(IStanConnection c)
+        {
+            Stopwatch sw = new Stopwatch();
+
+
+            //if (received == 0)
+            sw.Start();
+            var opts = StanSubscriptionOptions.GetDefaultOptions();
+            opts.DurableName = durableName;
+            using (var s = c.Subscribe(subject, opts, (obj, args) =>
+            {
+
+                processMessage(args.Message);
+
+            }))
+            {
+                sw.Stop();
+
+                return sw.Elapsed;
+
+            }
+
+        }
+
 
         private void printStats(IConnection c)
         {
@@ -87,13 +116,13 @@ namespace QueueProcessingService
             System.Console.WriteLine("   Incoming Payload Bytes: {0}", s.InBytes);
             System.Console.WriteLine("   Incoming Messages: {0}", s.InMsgs);
         }
-
-        private TimeSpan receiveAsyncSubscriber(IConnection c)
+        private TimeSpan receiveAsyncSubscriber(IStanConnection c)
         {
             Stopwatch sw = new Stopwatch();
             Object testLock = new Object();
-
-            EventHandler<MsgHandlerEventArgs> msgHandler = (sender, args) =>
+            StanSubscriptionOptions sOpts = StanSubscriptionOptions.GetDefaultOptions();
+            sOpts.DurableName = durableName;
+            EventHandler<StanMsgHandlerArgs> msgHandler = (sender, args) =>
             {
                 if (received == 0)
                     sw.Start();
@@ -101,21 +130,9 @@ namespace QueueProcessingService
                 processMessage(args.Message);
 
                 received++;
-
-                if (verbose)
-                    Console.WriteLine("Received: " + args.Message);
-
-               // if (received >= count)
-               // {
-               //     sw.Stop();
-               //     lock (testLock)
-               //     {
-               //         Monitor.Pulse(testLock);
-               //     }
-               // }
             };
 
-            using (IAsyncSubscription s = c.SubscribeAsync(subject, queue_group, msgHandler))
+            using (var s = c.Subscribe(subject, sOpts, msgHandler))
             {
                 // just wait until we are done.
                 lock (testLock)
@@ -126,31 +143,31 @@ namespace QueueProcessingService
 
             return sw.Elapsed;
         }
-
-        private void processMessage(Msg m)
+        private void processMessage(StanMsg m)
         {
-            Console.WriteLine("\n\n\n\n\n\n"); // Flush the Log a bit
-            Console.WriteLine("Received: " + System.Text.Encoding.UTF8.GetString(m.Data, 0, m.Data.Length));
-            Console.WriteLine("\n"); // Flush the Log a bit
-            HttpResponseMessage data;
-
             NatMessageObj natMessageObj = JsonConvert.DeserializeObject<NatMessageObj>(System.Text.Encoding.UTF8.GetString(m.Data, 0, m.Data.Length));
-            
+            Console.WriteLine(Environment.NewLine); // Flush the Log a bit
+            Console.WriteLine(String.Format("Received Event: {0}", natMessageObj.eventId));
+            Console.WriteLine(String.Format("Message: {0}", JsonConvert.SerializeObject(natMessageObj)));
+            HttpResponseMessage data;
+            QueueClient queueClient = new QueueClient();
+
+
             string MsgVerb = natMessageObj.verb;
             string MsgUrl = natMessageObj.requestUrl;
             string MsgResponseUrl = natMessageObj.responseUrl;
 
             JRaw payload = natMessageObj.payload;
 
-            Console.WriteLine(MsgVerb + " FOR: " + MsgUrl);
-           
+            Console.WriteLine(String.Format("{0} FOR: {1}", MsgVerb, MsgUrl));
+
             switch (MsgVerb)
             {
                 case "POST":
-                    data = DataClient.PostAsync(MsgUrl, payload).Result;                   
+                    data = DataClient.PostAsync(MsgUrl, payload).Result;
                     break;
-                case "GET":                    
-                    data = DataClient.GetAsync(MsgUrl).Result;                 
+                case "GET":
+                    data = DataClient.GetAsync(MsgUrl).Result;
                     break;
                 case "PUT":
                     data = DataClient.PutAsync(MsgUrl, payload).Result;
@@ -159,66 +176,102 @@ namespace QueueProcessingService
                     data = DataClient.DeleteAsync(MsgUrl, payload).Result;
                     break;
                 default:
-                    throw new Exception("Invalid VERB, message not processed");                    
+                    throw new Exception("Invalid VERB, message not processed");
             }
 
+            Console.WriteLine(String.Format("Recieved Status Code: {0}", data.StatusCode));
+            bool failure = false;
+            String failureLocation = "";
+            HttpStatusCode failureStatusCode = data.StatusCode;
+            //Handle adapter response
             if (data.IsSuccessStatusCode)
             {
-                               
-                Console.WriteLine("Success Code: " + data.StatusCode);
-                // @TODO Dequeue process here
-
-                JRaw MsgResponse = new JRaw(JsonConvert.DeserializeObject(data.Content.ReadAsStringAsync().Result));
-
-                // Only return the results if response URL was set, some requests require no response
-                if (!string.IsNullOrEmpty(MsgResponseUrl)) { 
-                    Console.WriteLine("Response Data: " + MsgResponse);
-                    Console.WriteLine("Sending Response data to: " + MsgResponseUrl);
-
-                    HttpResponseMessage responseData = DataClient.PostAsync(MsgResponseUrl, MsgResponse).Result;
-                    // @TODO - Log success or failure here
-                    if (responseData.IsSuccessStatusCode)
+                if (MsgVerb == "GET")
+                {
+                    String msgResStr = data.Content.ReadAsStringAsync().Result;
+                    // Only return the results if response URL was set, some requests require no response
+                    if (!string.IsNullOrEmpty(MsgResponseUrl))
                     {
-                        Console.WriteLine("Final Response: " + new JRaw(JsonConvert.DeserializeObject(responseData.Content.ReadAsStringAsync().Result)));
+                        Console.WriteLine(String.Format("Response Data: {0}", msgResStr));
+                        Console.WriteLine(String.Format("Sending Response data to: {0}", MsgResponseUrl));
+
+                        HttpResponseMessage responseData = DataClient.PostAsync(MsgResponseUrl, JsonConvert.DeserializeObject<JRaw>(msgResStr)).Result;
+                        if (responseData.IsSuccessStatusCode)
+                        {
+                            String dynamicsRespStr = responseData.Content.ReadAsStringAsync().Result;
+                            Console.WriteLine(String.Format("Adpater Response: {0}", dynamicsRespStr));
+
+                            DynamicsResponse MsgResponse = JsonConvert.DeserializeObject<DynamicsResponse>(dynamicsRespStr);
+                            Console.WriteLine(String.Format("Dynamics Status Code: {0}", MsgResponse.httpStatusCode));
+                            //Handle successful dynamics response
+                            if ((int)MsgResponse.httpStatusCode >= 200 && (int)MsgResponse.httpStatusCode <= 299)
+                            {
+                                Console.WriteLine("EventId: {0} has succeeded. {1} Dynamics Response: {2}", natMessageObj.eventId, Environment.NewLine, dynamicsRespStr);
+                            }
+                            else
+                            {
+                                failure = true;
+                                failureLocation = "Dynamics";
+                                failureStatusCode = MsgResponse.httpStatusCode;
+                            }
+                        }
+                        else
+                        {
+                            failure = true;
+                            failureLocation = "Adapter";
+                            failureStatusCode = responseData.StatusCode;
+                        }
                     }
                     else
                     {
-                        Console.WriteLine("Failure Code: " + data.StatusCode);
-
-                        // @TODO - Failure Retries
+                        Console.WriteLine(String.Format("Response Data: {0}", msgResStr));
+                        Console.WriteLine("No Response URL Set, work is complete ");
                     }
                 }
-                else
+                else if (MsgVerb == "POST")
                 {
-                    Console.WriteLine("Response Data: " + MsgResponse);
-                    Console.WriteLine("No Response URL Set, work is complete ");
+                    Console.WriteLine(String.Format("Data has been posted succesfully to Cornet."));
+                    Console.WriteLine(JsonConvert.SerializeObject(payload));
                 }
-            
-
             }
             else
             {
-                Console.WriteLine("Error Code: " + data.StatusCode);
-                // @TODO Error Escalation Strategy/Queue
-
+                failure = true;
+                failureLocation = "Cornet";
+                failureStatusCode = data.StatusCode;
             }
-            
-            
 
+            //Hanlde a failure at any point.
+            if (failure)
+            {
+                Console.WriteLine(String.Format("Error Code: {0}", failureStatusCode));
+                natMessageObj.errorCount++;
+                //Have we exceeded the maximum retry?
+                if (natMessageObj.errorCount <= maxErrorRetry)
+                {
+                    Console.WriteLine("EventId: {0} has failed at {1}. Error#: {2}. HttpStatusCode: {3}", natMessageObj.eventId, failureLocation, natMessageObj.errorCount, failureStatusCode);
+                    //Re-queue
+                    queueClient.QueueDynamicsNotficiation(natMessageObj);
+                }
+                else
+                {
+                    //TODO What do we do with a max error count?
+                    Console.WriteLine("EventId: {0} has failed at the {1}. No more attempts will be made. HttpStatusCode: {2}", natMessageObj.eventId, failureLocation, failureStatusCode);
+                }
+            }
         }
-
         private TimeSpan receiveSyncSubscriber(IConnection c)
         {
             using (ISyncSubscription s = c.SubscribeSync(subject, queue_group))
             {
                 Stopwatch sw = new Stopwatch();
 
-               
+
                 //if (received == 0)
                 sw.Start();
 
-                processMessage(s.NextMessage());
-               
+                // processMessage(s.NextMessage());
+
                 received++;
                 Console.WriteLine("Number of queued messages: " + s.QueuedMessageCount.ToString());
                 int i = 0;
@@ -293,7 +346,7 @@ namespace QueueProcessingService
             System.Console.WriteLine("  Subject: {0}", subject);
             System.Console.WriteLine("  Receiving: {0}",
                 sync ? "Synchronously" : "Asynchronously");
-        }    
+        }
     }
 
 }
