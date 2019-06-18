@@ -1,15 +1,18 @@
-﻿using Newtonsoft.Json;
+﻿using System;
+using System.Collections.Generic;
+using System.Net.Http;
+using System.Text;
+using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using QueueProcessingService.Util;
-using System;
-using System.Net.Http;
 using System.Threading.Tasks;
 
 namespace QueueProcessingService
 {
     static class DataClient
     {
-        private static int timeout = int.Parse(ConfigurationManager.FetchConfig("Request_Timeout").ToString());   
+        private static int timeout = int.Parse(ConfigurationManager.FetchConfig("Request_Timeout").ToString());
+   
 
         public static async Task<HttpResponseMessage> PostAsync(string uri, JRaw data)
         {
@@ -28,6 +31,7 @@ namespace QueueProcessingService
             }
         }
 
+
         public static async Task<HttpResponseMessage> PutAsync(String endpoint, JRaw data)
         {
             try
@@ -44,6 +48,7 @@ namespace QueueProcessingService
                 HttpResponseMessage failureResponse = new HttpResponseMessage(System.Net.HttpStatusCode.BadRequest);
                 return failureResponse;
             }
+
         }
 
         public static async Task<HttpResponseMessage> DeleteAsync(String endpoint, JRaw data)
@@ -62,7 +67,9 @@ namespace QueueProcessingService
                 HttpResponseMessage failureResponse = new HttpResponseMessage(System.Net.HttpStatusCode.BadRequest);
                 return failureResponse;
             }
-        }        
+        }
+
+        
 
         public static async Task<HttpResponseMessage> GetAsync(string uri)
         {
