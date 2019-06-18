@@ -1,22 +1,24 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.Threading;
-using NATS.Client;
+﻿using NATS.Client;
 using Newtonsoft.Json;
-using System.Net.Http;
 using Newtonsoft.Json.Linq;
 using QueueProcessingService.Util;
+<<<<<<< HEAD
 using STAN.Client;
 using Objects;
 using QueueProcessingService.Client;
 using System.Net;
+=======
+using System;
+using System.Net.Http;
+using System.Threading;
+
+>>>>>>> f80a48a6c531da046abac9329f08ae8dca58fee0
 
 namespace QueueProcessingService
 {
     public class QueueProcess
     {
-        Dictionary<string, string> parsedArgs = new Dictionary<string, string>();
+        //Dictionary<string, string> parsedArgs = new Dictionary<string, string>();
         int count = 0;
         int received = 0;
         // bool shutdown = false;
@@ -24,16 +26,13 @@ namespace QueueProcessingService
         // Environment Variable Configuration
         string url = ConfigurationManager.FetchConfig("QUEUE_URL");
         string subject = ConfigurationManager.FetchConfig("QUEUE_SUBJECT");
-        bool sync = (ConfigurationManager.FetchConfig("SYNCHRONOUS") == "TRUE");
-        bool verbose = (ConfigurationManager.FetchConfig("VERBOSE") == "TRUE");
+        //bool verbose = (ConfigurationManager.FetchConfig("VERBOSE") == "TRUE");
         string username = ConfigurationManager.FetchConfig("QUEUE_USERNAME");
         string password = ConfigurationManager.FetchConfig("QUEUE_PASSWORD");
         string queue_group = ConfigurationManager.FetchConfig("QUEUE_GROUP");
         string durableName = ConfigurationManager.FetchConfig("DURABLE_NAME");
         int maxErrorRetry = int.Parse(ConfigurationManager.FetchConfig("MAX_RETRY").ToString());
         public static int reconnect_attempts = 0;
-
-
 
         public static void Main(string[] args)
         {
@@ -56,10 +55,10 @@ namespace QueueProcessingService
             }
         }
 
-        public void Run(string[] args)
+        public void Run(string[] argsx)
         {
-            parseArgs(args);
             banner();
+<<<<<<< HEAD
             StanConnectionFactory stanConnectionFactory = new StanConnectionFactory();
             StanOptions stanOptions = StanOptions.GetDefaultOptions();
             stanOptions.NatsURL = String.Format("nats://{0}", url);
@@ -80,10 +79,21 @@ namespace QueueProcessingService
                 System.Console.WriteLine("({0} msgs/second).",
                     (int)(received / elapsed.TotalSeconds));
                 //printStats(c);
+=======
 
+            Options opts = ConnectionFactory.GetDefaultOptions();
+            opts.Url = url;
+
+            using (IConnection connection = new ConnectionFactory().CreateConnection(opts))
+            {
+                receiveAsyncSubscriber(connection);
+>>>>>>> f80a48a6c531da046abac9329f08ae8dca58fee0
+
+                System.Console.Write("Received {0} msgs", received);
             }
         }
 
+<<<<<<< HEAD
         private TimeSpan syncSubscriber(IStanConnection c)
         {
             Stopwatch sw = new Stopwatch();
@@ -119,20 +129,28 @@ namespace QueueProcessingService
         private TimeSpan receiveAsyncSubscriber(IStanConnection c)
         {
             Stopwatch sw = new Stopwatch();
+=======
+        private void receiveAsyncSubscriber(IConnection connection)
+        {
+>>>>>>> f80a48a6c531da046abac9329f08ae8dca58fee0
             Object testLock = new Object();
             StanSubscriptionOptions sOpts = StanSubscriptionOptions.GetDefaultOptions();
             sOpts.DurableName = durableName;
             EventHandler<StanMsgHandlerArgs> msgHandler = (sender, args) =>
             {
-                if (received == 0)
-                    sw.Start();
-
                 processMessage(args.Message);
-
                 received++;
+<<<<<<< HEAD
             };
 
             using (var s = c.Subscribe(subject, sOpts, msgHandler))
+=======
+
+                Console.WriteLine("Received: " + args.Message);
+            };
+
+            using (IAsyncSubscription subscription = connection.SubscribeAsync(subject, queue_group, msgHandler))
+>>>>>>> f80a48a6c531da046abac9329f08ae8dca58fee0
             {
                 // just wait until we are done.
                 lock (testLock)
@@ -141,18 +159,33 @@ namespace QueueProcessingService
                 }
             }
 
-            return sw.Elapsed;
+            // Closing a connection
+            connection.Flush(); //??
+            connection.Close(); //??
         }
+<<<<<<< HEAD
         private void processMessage(StanMsg m)
         {
             NatMessageObj natMessageObj = JsonConvert.DeserializeObject<NatMessageObj>(System.Text.Encoding.UTF8.GetString(m.Data, 0, m.Data.Length));
             Console.WriteLine(Environment.NewLine); // Flush the Log a bit
             Console.WriteLine(String.Format("Received Event: {0}", natMessageObj.eventId));
             Console.WriteLine(String.Format("Message: {0}", JsonConvert.SerializeObject(natMessageObj)));
+=======
+
+        private void processMessage(Msg natMessage)
+        {
+            String natMessageString = System.Text.Encoding.UTF8.GetString(natMessage.Data, 0, natMessage.Data.Length);
+
+            Console.WriteLine("\n\n\n\n\n\n"); // Flush the Log a bit
+            Console.WriteLine("Received: " + natMessageString);
+            Console.WriteLine("\n"); // Flush the Log a bit
+
+>>>>>>> f80a48a6c531da046abac9329f08ae8dca58fee0
             HttpResponseMessage data;
             QueueClient queueClient = new QueueClient();
 
 
+<<<<<<< HEAD
             string MsgVerb = natMessageObj.verb;
             string MsgUrl = natMessageObj.requestUrl;
             string MsgResponseUrl = natMessageObj.responseUrl;
@@ -168,12 +201,31 @@ namespace QueueProcessingService
                     break;
                 case "GET":
                     data = DataClient.GetAsync(MsgUrl).Result;
+=======
+            NatMessageObj natMessageObj = JsonConvert.DeserializeObject<NatMessageObj>(natMessageString);
+            
+            string msgVerb = natMessageObj.verb;
+            string msgUrl = natMessageObj.requestUrl;
+            string msgResponseUrl = natMessageObj.responseUrl;
+
+            JRaw payload = natMessageObj.payload;
+
+            Console.WriteLine(msgVerb + " FOR: " + msgUrl);
+
+            switch (msgVerb)
+            {
+                case "POST":
+                    data = DataClient.PostAsync(msgUrl, payload).Result;
+                    break;
+                case "GET":
+                    data = DataClient.GetAsync(msgUrl).Result;
+>>>>>>> f80a48a6c531da046abac9329f08ae8dca58fee0
                     break;
                 case "PUT":
-                    data = DataClient.PutAsync(MsgUrl, payload).Result;
+                    data = DataClient.PutAsync(msgUrl, payload).Result;
                     break;
                 case "DELETE":
-                    data = DataClient.DeleteAsync(MsgUrl, payload).Result;
+                    data = DataClient.DeleteAsync(msgUrl, payload).Result;
                     break;
                 default:
                     throw new Exception("Invalid VERB, message not processed");
@@ -186,11 +238,28 @@ namespace QueueProcessingService
             //Handle adapter response
             if (data.IsSuccessStatusCode)
             {
+<<<<<<< HEAD
                 if (MsgVerb == "GET")
                 {
                     String msgResStr = data.Content.ReadAsStringAsync().Result;
                     // Only return the results if response URL was set, some requests require no response
                     if (!string.IsNullOrEmpty(MsgResponseUrl))
+=======
+                Console.WriteLine("Success Code: " + data.StatusCode);
+                // @TODO Dequeue process here
+
+                JRaw msgResponse = new JRaw(JsonConvert.DeserializeObject(data.Content.ReadAsStringAsync().Result));
+
+                // Only return the results if response URL was set, some requests require no response
+                if (!string.IsNullOrEmpty(msgResponseUrl))
+                {
+                    Console.WriteLine("Response Data: " + msgResponse);
+                    Console.WriteLine("Sending Response data to: " + msgResponseUrl);
+
+                    HttpResponseMessage responseData = DataClient.PostAsync(msgResponseUrl, msgResponse).Result;
+                    // @TODO - Log success or failure here
+                    if (responseData.IsSuccessStatusCode)
+>>>>>>> f80a48a6c531da046abac9329f08ae8dca58fee0
                     {
                         Console.WriteLine(String.Format("Response Data: {0}", msgResStr));
                         Console.WriteLine(String.Format("Sending Response data to: {0}", MsgResponseUrl));
@@ -230,12 +299,18 @@ namespace QueueProcessingService
                 }
                 else if (MsgVerb == "POST")
                 {
+<<<<<<< HEAD
                     Console.WriteLine(String.Format("Data has been posted succesfully to Cornet."));
                     Console.WriteLine(JsonConvert.SerializeObject(payload));
+=======
+                    Console.WriteLine("Response Data: " + msgResponse);
+                    Console.WriteLine("No Response URL Set, work is complete ");
+>>>>>>> f80a48a6c531da046abac9329f08ae8dca58fee0
                 }
             }
             else
             {
+<<<<<<< HEAD
                 failure = true;
                 failureLocation = "Cornet";
                 failureStatusCode = data.StatusCode;
@@ -336,17 +411,25 @@ namespace QueueProcessingService
 
             if (parsedArgs.ContainsKey("-verbose"))
                 verbose = true;
+=======
+                Console.WriteLine("Error Code: " + data.StatusCode);
+                // @TODO Error Escalation Strategy/Queue
+            }
+>>>>>>> f80a48a6c531da046abac9329f08ae8dca58fee0
         }
 
         private void banner()
         {
-            System.Console.WriteLine("Receiving {0} messages on subject {1}",
-                count, subject);
+            System.Console.WriteLine("Receiving {0} messages on subject {1}", count, subject);
             System.Console.WriteLine("  Url: {0}", url);
             System.Console.WriteLine("  Subject: {0}", subject);
+<<<<<<< HEAD
             System.Console.WriteLine("  Receiving: {0}",
                 sync ? "Synchronously" : "Asynchronously");
         }
+=======
+        }    
+>>>>>>> f80a48a6c531da046abac9329f08ae8dca58fee0
     }
 
 }

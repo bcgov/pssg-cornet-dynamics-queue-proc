@@ -22,5 +22,15 @@ namespace Objects
         public String verb { get; set; }
         [JsonProperty("payload")]
         public JRaw payload { get; set; }
+        public override string ToString()
+        {
+            return "NatMessageObj: [requestUrl:" + requestUrl
+                + ", responseUrl:" + responseUrl
+                + ", eventId:" + eventId
+                + ", errorQueue:" + errorQueue
+                + ", verb:" + verb
+                + ", payload:" + payload
+                + "]";
+        }
     }
 }
