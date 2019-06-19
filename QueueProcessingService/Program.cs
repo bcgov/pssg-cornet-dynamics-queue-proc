@@ -33,6 +33,7 @@ namespace QueueProcessingService
         string clusterName = ConfigurationManager.FetchConfig("CLUSTER_NAME");
         string clientID = ConfigurationManager.FetchConfig("CLIENT_ID");
         int maxErrorRetry = int.Parse(ConfigurationManager.FetchConfig("MAX_RETRY").ToString());
+
         public static int reconnect_attempts = 0;
 
 
@@ -152,7 +153,7 @@ namespace QueueProcessingService
             Console.WriteLine(String.Format("Received Event: {0}", natMessageObj.eventId));
             Console.WriteLine(String.Format("Message: {0}", JsonConvert.SerializeObject(natMessageObj)));
             HttpResponseMessage data;
-            QueueClient queueClient = new QueueClient();
+            QueueClient queueClient = new QueueClient(clusterName, ConfigurationManager.FetchConfig("RE_QUEUE_CLIENT_ID"));
 
 
             string MsgVerb = natMessageObj.verb;

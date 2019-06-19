@@ -14,6 +14,13 @@ namespace QueueProcessingService.Client
     public class QueueClient
     {
         private int retriesMax = 5;
+        private String clusterName;
+        private String clientId;
+        public QueueClient(String clusterName, String clientId)
+        {
+            this.clusterName = clusterName;
+            this.clientId = clientId;
+        }
         public HttpResponseMessage QueueDynamicsNotficiation(NatMessageObj natsMessage)
         {
             //Setup NATS Options
@@ -27,7 +34,7 @@ namespace QueueProcessingService.Client
             {
                 try
                 {
-                    using (var c = stanConnectionFactory.CreateConnection("local", "re-queue-publisher-id", stanOptions))
+                    using (var c = stanConnectionFactory.CreateConnection(clusterId, clientId, stanOptions))
                     {
                         c.Publish(ConfigurationManager.FetchConfig("QUEUE_SUBJECT"), Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(natsMessage)));
                     }
