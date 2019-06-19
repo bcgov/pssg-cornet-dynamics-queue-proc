@@ -85,8 +85,6 @@ namespace QueueProcessingService
                     Monitor.Wait(testLock);
                 }
             }
-
-            //return sw.Elapsed;
         }
         private void processMessage(StanMsg m)
         {
@@ -94,8 +92,8 @@ namespace QueueProcessingService
             Console.WriteLine(Environment.NewLine); // Flush the Log a bit
             Console.WriteLine("Received Event: {0}", natMessageObj.eventId);
             Console.WriteLine("Message: {0}", JsonConvert.SerializeObject(natMessageObj));
-            HttpResponseMessage data = null; 
-            HttpResponseMessage responseData = null;
+            HttpResponseMessage data = new HttpResponseMessage(); 
+            HttpResponseMessage responseData = new HttpResponseMessage();
             String dynamicsRespStr;
             DynamicsResponse MsgResponse;
             QueueClient queueClient = new QueueClient(clusterName, ConfigurationManager.FetchConfig("RE_QUEUE_CLIENT_ID"));
