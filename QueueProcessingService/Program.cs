@@ -17,7 +17,6 @@ namespace QueueProcessingService
     public class QueueProcess
     {
         int count = 0;
-        int received = 0;
         // bool shutdown = false;
 
         // Environment Variable Configuration
@@ -70,18 +69,12 @@ namespace QueueProcessingService
 
         private void receiveAsyncSubscriber(IStanConnection c)
         {
-            Stopwatch sw = new Stopwatch();
             Object testLock = new Object();
             StanSubscriptionOptions sOpts = StanSubscriptionOptions.GetDefaultOptions();
             sOpts.DurableName = durableName;
             EventHandler<StanMsgHandlerArgs> msgHandler = (sender, args) =>
             {
-                if (received == 0)
-                    sw.Start();
-
                 processMessage(args.Message);
-
-                received++;
             };
 
             using (IStanSubscription s = c.Subscribe(subject, sOpts, msgHandler))
