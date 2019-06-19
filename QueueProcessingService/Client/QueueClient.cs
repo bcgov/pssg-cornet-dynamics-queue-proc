@@ -34,7 +34,7 @@ namespace QueueProcessingService.Client
             {
                 try
                 {
-                    using (var c = stanConnectionFactory.CreateConnection(clusterId, clientId, stanOptions))
+                    using (var c = stanConnectionFactory.CreateConnection(clusterName, clientId, stanOptions))
                     {
                         c.Publish(ConfigurationManager.FetchConfig("QUEUE_SUBJECT"), Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(natsMessage)));
                     }
