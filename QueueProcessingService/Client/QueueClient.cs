@@ -11,7 +11,7 @@ using System.Threading.Tasks;
 
 namespace QueueProcessingService.Client
 {
-    public class QueueClient
+    public class QueueClient 
     {
         private int retriesMax = 5;
         private String clusterName;
@@ -34,7 +34,7 @@ namespace QueueProcessingService.Client
             {
                 try
                 {
-                    using (var c = stanConnectionFactory.CreateConnection(clusterName, clientId, stanOptions))
+                    using (IStanConnection c = stanConnectionFactory.CreateConnection(clusterName, clientId, stanOptions))
                     {
                         c.Publish(ConfigurationManager.FetchConfig("QUEUE_SUBJECT"), Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(natsMessage)));
                     }
