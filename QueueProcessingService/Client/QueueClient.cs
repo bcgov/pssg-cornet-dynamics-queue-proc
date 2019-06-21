@@ -42,7 +42,7 @@ namespace QueueProcessingService.Client
                 }
                 catch (Exception e)
                 {
-                    Console.WriteLine(String.Format("Error in queue connection. Retry {0} of 5, Message: {1} ", (i + 1).ToString(), e.Message));
+                    Console.WriteLine("Error in queue connection. Retry {0} of 5, Message: {1} ", (i + 1).ToString(), e.Message);
                 }
                 i++;
             }

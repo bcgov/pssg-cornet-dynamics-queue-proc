@@ -90,8 +90,8 @@ namespace QueueProcessingService
         {
             NatMessageObj natMessageObj = JsonConvert.DeserializeObject<NatMessageObj>(System.Text.Encoding.UTF8.GetString(m.Data, 0, m.Data.Length));
             Console.WriteLine(Environment.NewLine); // Flush the Log a bit
-            Console.WriteLine("Received Event: {0}", natMessageObj.eventId);
-            Console.WriteLine("Message: {0}", JsonConvert.SerializeObject(natMessageObj));
+            Console.WriteLine("{0}: Received Event: {1}", DateTime.Now, natMessageObj.eventId);
+            Console.WriteLine("{0}: Message: {1}", DateTime.Now, JsonConvert.SerializeObject(natMessageObj));
             HttpResponseMessage data = new HttpResponseMessage(); 
             HttpResponseMessage responseData = new HttpResponseMessage();
             String dynamicsRespStr;
@@ -105,7 +105,7 @@ namespace QueueProcessingService
 
             JRaw payload = natMessageObj.payload;
 
-            Console.WriteLine("{0} FOR: {1}", MsgVerb, MsgUrl);
+            Console.WriteLine("    {0} FOR: {1}", MsgVerb, MsgUrl);
 
             switch (MsgVerb)
             {
@@ -125,7 +125,7 @@ namespace QueueProcessingService
                     throw new Exception("Invalid VERB, message not processed");
             }
 
-            Console.WriteLine("Recieved Status Code: {0}", data.StatusCode);
+            Console.WriteLine("     Recieved Status Code: {0}", data.StatusCode);
             bool failure = false;
             String failureLocation = "";
             HttpStatusCode failureStatusCode = data.StatusCode;
@@ -138,21 +138,21 @@ namespace QueueProcessingService
                     // Only return the results if response URL was set, some requests require no response
                     if (!string.IsNullOrEmpty(MsgResponseUrl))
                     {
-                        Console.WriteLine("Response Data: {0}", msgResStr);
-                        Console.WriteLine("Sending Response data to: {0}", MsgResponseUrl);
+                        Console.WriteLine("    Response Data: {0}", msgResStr);
+                        Console.WriteLine("    Sending Response data to: {0}", MsgResponseUrl);
 
                         responseData = DataClient.PostAsync(MsgResponseUrl, JsonConvert.DeserializeObject<JRaw>(msgResStr)).Result;
                         if (responseData.IsSuccessStatusCode)
                         {
                             dynamicsRespStr = responseData.Content.ReadAsStringAsync().Result;
-                            Console.WriteLine("Adpater Response: {0}", dynamicsRespStr);
+                            Console.WriteLine("    Adpater Response: {0}", dynamicsRespStr);
 
                             MsgResponse = JsonConvert.DeserializeObject<DynamicsResponse>(dynamicsRespStr);
-                            Console.WriteLine("Dynamics Status Code: {0}", MsgResponse.httpStatusCode);
+                            Console.WriteLine("    Dynamics Status Code: {0}", MsgResponse.httpStatusCode);
                             //Handle successful dynamics response
                             if ((int)MsgResponse.httpStatusCode >= 200 && (int)MsgResponse.httpStatusCode <= 299)
                             {
-                                Console.WriteLine("EventId: {0} has succeeded. {1} Dynamics Response: {2}", natMessageObj.eventId, Environment.NewLine, dynamicsRespStr);
+                                Console.WriteLine("    EventId: {0} has succeeded. {1} Dynamics Response: {2}", natMessageObj.eventId, Environment.NewLine, dynamicsRespStr);
                             }
                             else
                             {
@@ -170,13 +170,13 @@ namespace QueueProcessingService
                     }
                     else
                     {
-                        Console.WriteLine("Response Data: {0}", msgResStr);
-                        Console.WriteLine("No Response URL Set, work is complete ");
+                        Console.WriteLine("    Response Data: {0}", msgResStr);
+                        Console.WriteLine("    No Response URL Set, work is complete ");
                     }
                 }
                 else if (MsgVerb == "POST")
                 {
-                    Console.WriteLine("Data has been posted succesfully to Cornet.");
+                    Console.WriteLine("    Data has been posted succesfully to Cornet.");
                     Console.WriteLine(JsonConvert.SerializeObject(payload));
                 }
             }
@@ -190,19 +190,19 @@ namespace QueueProcessingService
             //Hanlde a failure at any point.
             if (failure)
             {
-                Console.WriteLine(String.Format("Error Code: {0}", failureStatusCode));
+                Console.WriteLine("    Error Code: {0}", failureStatusCode);
                 natMessageObj.errorCount++;
                 //Have we exceeded the maximum retry?
                 if (natMessageObj.errorCount <= maxErrorRetry)
                 {
-                    Console.WriteLine("EventId: {0} has failed at {1}. Error#: {2}. HttpStatusCode: {3}", natMessageObj.eventId, failureLocation, natMessageObj.errorCount, failureStatusCode);
+                    Console.WriteLine("    EventId: {0} has failed at {1}. Error#: {2}. HttpStatusCode: {3}", natMessageObj.eventId, failureLocation, natMessageObj.errorCount, failureStatusCode);
                     //Re-queue
                     queueClient.QueueDynamicsNotficiation(natMessageObj);
                 }
                 else
                 {
                     //TODO What do we do with a max error count?
-                    Console.WriteLine("EventId: {0} has failed at the {1}. No more attempts will be made. HttpStatusCode: {2}", natMessageObj.eventId, failureLocation, failureStatusCode);
+                    Console.WriteLine("    EventId: {0} has failed at the {1}. No more attempts will be made. HttpStatusCode: {2}", natMessageObj.eventId, failureLocation, failureStatusCode);
                 }
             }
             data.Dispose();
