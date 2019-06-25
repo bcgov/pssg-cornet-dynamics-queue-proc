@@ -77,9 +77,20 @@ namespace QueueProcessingService
             EventHandler<StanMsgHandlerArgs> msgHandler = (sender, args) =>
             {
                 args.Message.Ack();
+
                 using (MessageService messageService = new MessageService())
                 {
-                    messageService.processMessage(args.Message);
+                    bool result = messageService.processMessage(args.Message);
+                    if (!result)
+                    {
+                        args.Message.Ack();
+                    }
+                    //Failed at least once and redeliverd once
+                    else if (result && args.Message.Redelivered)
+                    {
+                        args.Message.Ack();
+                        Console.WriteLine("    No more attempts will be made.");
+                    }
                 }
             };
 
@@ -99,10 +110,25 @@ namespace QueueProcessingService
             IStanSubscription s = c.Subscribe(subject, sOpts, (sender, args) =>
             {
                 // just wait until we are done.
-                args.Message.Ack();
                 using (MessageService messageService = new MessageService())
                 {
-                    messageService.processMessage(args.Message);
+                    bool result = messageService.processMessage(args.Message);
+                    if (result)
+                    {
+                        args.Message.Ack();
+                    }
+                    //Failed at least once and redeliverd once
+                    else if (!result && args.Message.Redelivered)
+                    {
+                        args.Message.Ack();
+                    }
+                    //Failed
+                    else 
+                    {
+                        //We have ack it we don't want to try again.
+                        args.Message.Ack();
+                        Console.WriteLine("    No more attempts will be made.");
+                    }
                 }
             });
         }

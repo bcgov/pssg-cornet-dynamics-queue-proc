@@ -18,7 +18,7 @@ namespace QueueProcessingService.Service
     {
         string clusterName = ConfigurationManager.FetchConfig("CLUSTER_NAME");
         int maxErrorRetry = int.Parse(ConfigurationManager.FetchConfig("MAX_RETRY").ToString());
-        public void processMessage(StanMsg m)
+        public bool processMessage(StanMsg m)
         {
             NatMessageObj natMessageObj = JsonConvert.DeserializeObject<NatMessageObj>(System.Text.Encoding.UTF8.GetString(m.Data, 0, m.Data.Length));
             Console.WriteLine(Environment.NewLine); // Flush the Log a bit
@@ -123,22 +123,13 @@ namespace QueueProcessingService.Service
             if (failure)
             {
                 Console.WriteLine("    Error Code: {0}", failureStatusCode);
-                natMessageObj.errorCount++;
-                //Have we exceeded the maximum retry?
-                if (natMessageObj.errorCount <= maxErrorRetry)
-                {
-                    Console.WriteLine("    EventId: {0} has failed at {1}. Error#: {2}. HttpStatusCode: {3}", natMessageObj.eventId, failureLocation, natMessageObj.errorCount, failureStatusCode);
+                Console.WriteLine("    EventId: {0} has failed at {1}. HttpStatusCode: {2}", natMessageObj.eventId, failureLocation, failureStatusCode);
                     //Re-queue
-                    queueClient.QueueDynamicsNotficiation(natMessageObj);
-                }
-                else
-                {
-                    //TODO What do we do with a max error count?
-                    Console.WriteLine("    EventId: {0} has failed at the {1}. No more attempts will be made. HttpStatusCode: {2}", natMessageObj.eventId, failureLocation, failureStatusCode);
-                }
+                    //queueClient.QueueDynamicsNotficiation(natMessageObj);
             }
             data.Dispose();
             responseData.Dispose();
+            return failure;
         }
         public void Dispose()
         {
